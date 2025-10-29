@@ -1,0 +1,19 @@
+# Maven build output
+target/
+
+# MacOS Finder metadata
+.DS_Store
+
+# Eclipse project metadata
+.classpath
+.project
+.settings/
+
+# IntelliJ/IDEA metadata (future-proofing)
+.idea/
+*.iml
+
+# Local runtime data
+EasyReadQuotes/
+quotes_db.json
+/Users/Shared/EasyReadQuoter/
