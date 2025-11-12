@@ -30,6 +30,8 @@ ENV JPRO_HOST=0.0.0.0
 ENV JPRO_PORT=8080
 
 # Use -jar (manifest) by default
-CMD sh -c "java -Djpro.host=$JPRO_HOST -Djpro.port=$JPRO_PORT -jar /app/app.jar"
+# Replace CMD with:
+CMD sh -c 'java -Djpro.host=$JPRO_HOST -Djpro.port=$JPRO_PORT -cp "/app/app.jar:/app/lib/*" com.easyread.MainApp'
+
 
 
