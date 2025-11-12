@@ -637,7 +637,8 @@ public class MainApp extends Application {
             	    alert("Xero", "XERO_CLIENT_ID env var is not set.");
             	    return;
             	}
-            	var xero = new com.easyread.xero.XeroClient(xeroClientId);
+            	var xero = new com.easyread.xero.XeroClient(System.getenv("XERO_CLIENT_ID"));
+
 
 
                 // 1) Contact
@@ -742,13 +743,22 @@ public class MainApp extends Application {
         //
         // -------- CREATE TRELLO CARD BUTTON ACTION --------
         //
-        final String TRELLO_KEY = "9a03517de4f4abef7e5c51cd06487ae3";
-        final String TRELLO_TOKEN = "ATTAa42ced1f5f30e3139ca63b8fa768bafd1581e699b38e873824d721d0c4c825ae759A7D9F";
-        final String TRELLO_LIST_ID = "6867b3f24ff9b2f54aa8b931";
+        
+        // final String TRELLO_KEY = "9a03517de4f4abef7e5c51cd06487ae3";
+        // final String TRELLO_TOKEN = "ATTAa42ced1f5f30e3139ca63b8fa768bafd1581e699b38e873824d721d0c4c825ae759A7D9F";
+        // final String TRELLO_LIST_ID = "6867b3f24ff9b2f54aa8b931";
+        
+        final String TRELLO_KEY   = System.getenv("TRELLO_KEY");
+        final String TRELLO_TOKEN = System.getenv("TRELLO_TOKEN");
+        final String TRELLO_LIST_ID = System.getenv("TRELLO_LIST_ID");
 
-        final String STATUS_FIELD_ID = "68680660756e5ba27c9f8d46";          // Status custom field
-        final String STATUS_OPTION_WITH_US_ID = "68680660756e5ba27c9f8d47"; // "with us"
-        final String EST_HOURS_FIELD_ID = "6888df8d59a5fa3d6f2b1072";       // Estimated hours
+        // final String STATUS_FIELD_ID = "68680660756e5ba27c9f8d46";          // Status custom field
+        // final String STATUS_OPTION_WITH_US_ID = "68680660756e5ba27c9f8d47"; // "with us"
+        // final String EST_HOURS_FIELD_ID = "6888df8d59a5fa3d6f2b1072";   
+        
+        final String STATUS_FIELD_ID   = System.getenv("STATUS_FIELD_ID");
+        final String STATUS_OPTION_WITH_US_ID = System.getenv("STATUS_OPTION_WITH_US_ID");
+        final String EST_HOURS_FIELD_ID = System.getenv("EST_HOURS_FIELD_ID");// Estimated hours
 
         TrelloClient trelloClient = new TrelloClient(
                 TRELLO_KEY,
