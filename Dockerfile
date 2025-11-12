@@ -5,11 +5,11 @@ FROM maven:3.9.9-eclipse-temurin-21 AS builder
 WORKDIR /app
 
 # Cache deps
-COPY pom.xml .
+COPY server/pom.xml .
 RUN mvn -q -B -U dependency:go-offline
 
 # Build
-COPY . .
+COPY server/. .
 RUN mvn -q -B -U -DskipTests package
 
 # ---- RUNTIME STAGE ----
