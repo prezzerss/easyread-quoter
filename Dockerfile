@@ -1,15 +1,27 @@
 # syntax=docker/dockerfile:1
 
-# ---- BUILD STAGE ----
-FROM maven:3.9.9-eclipse-temurin-21 AS builder
+# ---- BUILD ----
+FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app
 
-# Copy everything (keeps it simple for now)
-COPY . .
+# Copy wrapper first so dependency cache survives source changes
+COPY .mvn/ .mvn/
+COPY mvnw .
+COPY pom.xml .
 
-# Use cache for ~/.m2 if supported; print full errors (-e) and debug (-X)
-# Remove -q so we can SEE the failure cause.
-RUN --mount=type=cache,target=/root/.m2 mvn -B -U -e -X -DskipTests package
+# Cache the local repo to speed up downloads
+RUN --mount=type=cache,target=/root/.m2 \
+    ./mvnw -B -U -e -DskipTests dependency:go-offline
+
+# Now copy sources and build
+COPY src ./src
+COPY templates.json ./templates.json
+
+# Give Maven more heap (Render builder is memory-tight sometimes)
+ENV MAVEN_OPTS="-Xmx1024m"
+
+RUN --mount=type=cache,target=/root/.m2 \
+    ./mvnw -B -U -e -DskipTests package
 
 # ---- RUNTIME STAGE ----
 FROM eclipse-temurin:21-jre
