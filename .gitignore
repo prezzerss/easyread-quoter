@@ -1,19 +1,26 @@
-# Maven build output
-target/
-
-# MacOS Finder metadata
+cat > .gitignore <<'EOF'
+# macOS
 .DS_Store
 
-# Eclipse project metadata
+# Java / Maven build
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
 .classpath
 .project
 .settings/
-
-# IntelliJ/IDEA metadata (future-proofing)
 .idea/
 *.iml
 
-# Local runtime data
-EasyReadQuotes/
-quotes_db.json
+# Logs & temp
+logs/
+*.log
+
+# Local JSONs and exported data
+templates.json
 /Users/Shared/EasyReadQuoter/
+
+# Render / Docker
+*.env
+EOF
