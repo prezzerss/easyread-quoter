@@ -1,26 +1,43 @@
-cat > .gitignore <<'EOF'
-# macOS
+
+# OS
 .DS_Store
 
-# Java / Maven build
-target/
-!.mvn/wrapper/maven-wrapper.jar
-
-# IDEs
+# IDE
 .classpath
 .project
 .settings/
 .idea/
 *.iml
 
-# Logs & temp
+# Maven/Gradle builds
+target/
+build/
+dist/
 logs/
-*.log
 
-# Local JSONs and exported data
-templates.json
+# Java & JavaFX packaging outputs
+*.dmg
+*.pkg
+*.exe
+*.msi
+*.zip
+
+# Local configs & secrets
+.env
+.env.*
+*.local
+config.properties
+*.keystore
+keystore.jks
+*.pem
+*.crt
+*.p12
+
+# App-specific
 /Users/Shared/EasyReadQuoter/
+/Users/Shared/EasyReadQuoter/*.json
+templates.json
 
-# Render / Docker
-*.env
-EOF
+# Node/web (if you add a web UI later)
+node_modules/
+
