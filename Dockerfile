@@ -4,26 +4,31 @@
 FROM maven:3.9.9-eclipse-temurin-21 AS builder
 WORKDIR /app
 
-# copy everything (simple & robust)
+# Copy everything (simple & robust)
 COPY . .
 
-# build and force final name to 'app'
-RUN mvn -B -U -DskipTests -Dproject.build.finalName=app package
+# Build (add -DskipTests to speed builds)
+RUN mvn -B -U -DskipTests package
 
-# show what's inside so Render logs reveal the actual classes + manifest
-RUN echo "=== TARGET LIST ===" && ls -al target && \
-    echo "=== MANIFEST ===" && (jar xf target/app-shaded.jar META-INF/MANIFEST.MF || true) && \
-    (cat META-INF/MANIFEST.MF || true) && \
-    echo "=== CLASSES PRESENT? ===" && \
-    jar tf target/app-shaded.jar | grep -E "Main(App)?\.class|com/easyread" || true
+# Pick the built JAR (prefer *-shaded.jar if present), then normalize to /app/app.jar
+RUN set -e; \
+    ls -al target; \
+    JAR="$(ls target/*-shaded.jar 2>/dev/null || ls target/*.jar | head -n1)"; \
+    echo "Selected JAR: $JAR"; \
+    cp "$JAR" /app/app.jar; \
+    echo "=== MANIFEST ==="; \
+    (jar xf /app/app.jar META-INF/MANIFEST.MF && cat META-INF/MANIFEST.MF) || true
 
 # ---- RUNTIME ----
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=builder /app/target/app-shaded.jar /app/app.jar
+
+# Copy the normalized JAR from the builder
+COPY --from=builder /app/app.jar /app/app.jar
 
 EXPOSE 8080
 ENV JPRO_HOST=0.0.0.0
 ENV JPRO_PORT=8080
 
 CMD sh -c "java -Djpro.host=$JPRO_HOST -Djpro.port=$JPRO_PORT -jar /app/app.jar"
+
