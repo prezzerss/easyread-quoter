@@ -41,3 +41,7 @@ templates.json
 # Node/web (if you add a web UI later)
 node_modules/
 
+target/
+.idea/
+*.iml
+.DS_Store

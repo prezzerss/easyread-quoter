@@ -25,6 +25,9 @@
     <repository>
       <id>jpro-repo</id>
       <url>https://sandec.jfrog.io/artifactory/repo</url>
+      <releases>
+      <updatePolicy>always</updatePolicy>
+    </releases>
     </repository>
   </repositories>
   
@@ -87,8 +90,50 @@
   	  <artifactId>gson</artifactId>
   	  <version>2.11.0</version>
 	</dependency>
+	
+	 <dependency>
+      <groupId>one.jpro</groupId>
+      <artifactId>jpro-webapi</artifactId>
+      <version>2024.1.0</version>
+    </dependency>
 
   </dependencies>
+  
+   <profiles>
+    <!-- Local desktop run on your Mac -->
+    <profile>
+      <id>desktop</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.openjfx</groupId>
+          <artifactId>javafx-controls</artifactId>
+          <version>${javafx.version}</version>
+          <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+          <groupId>org.openjfx</groupId>
+          <artifactId>javafx-graphics</artifactId>
+          <version>${javafx.version}</version>
+          <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+          <groupId>org.openjfx</groupId>
+          <artifactId>javafx-web</artifactId>
+          <version>${javafx.version}</version>
+          <classifier>${javafx.platform}</classifier>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <!-- Render/Web build – no JavaFX deps -->
+    <profile>
+      <id>web</id>
+    </profile>
+  </profiles>
+
 
   <build>
     <plugins>
@@ -148,6 +193,35 @@
     </jvmArgs>
   </configuration>
 </plugin>
+
+
+<!-- JPro plugin creates the runnable web jar -->
+      <plugin>
+        <groupId>one.jpro</groupId>
+        <artifactId>jpro-maven-plugin</artifactId>
+        <version>2024.1.0</version>
+        <configuration>
+          <mainClassName>com.easyread.WebMain</mainClassName>
+        </configuration>
+      </plugin>
+
+      <!-- Put runtime deps into target/lib (handy for desktop too) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.6.1</version>
+        <executions>
+          <execution>
+            <id>copy-deps</id>
+            <phase>package</phase>
+            <goals><goal>copy-dependencies</goal></goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
+              <includeScope>runtime</includeScope>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
 
     </plugins>
