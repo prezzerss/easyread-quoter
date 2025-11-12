@@ -14,10 +14,13 @@ RUN ls -al target && \
 # ---- RUNTIME ----
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=builder /app/app.jar /app/app.jar
+# copy all jars out of /target
+COPY --from=builder /app/target/*.jar /app/
+# if your build also outputs a /target/lib folder with deps, copy that too:
+# COPY --from=builder /app/target/lib /app/lib
 
 EXPOSE 8080
 ENV JPRO_HOST=0.0.0.0
 ENV JPRO_PORT=8080
-CMD sh -c "java -Djpro.host=$JPRO_HOST -Djpro.port=$JPRO_PORT -jar /app/app.jar"
-
+# CMD sh -c "java -Djpro.host=$JPRO_HOST -Djpro.port=$JPRO_PORT -jar /app/app.jar"
+CMD sh -c 'java -Djpro.host=$JPRO_HOST -Djpro.port=$JPRO_PORT -cp "/app/*:/app/lib/*" com.easyread.MainApp'
