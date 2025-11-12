@@ -9,7 +9,7 @@ COPY . .
 
 # Build (use wrapper if you added it; otherwise mvn is fine here)
 # If you have mvnw in the repo, use: RUN ./mvnw -B -U -DskipTests package
-RUN ./mvnw -B -U -DskipTests package
+RUN mvn -B -U -DskipTests package
 
 # ---- RUNTIME ----
 FROM eclipse-temurin:21-jre
