@@ -4,8 +4,11 @@ services:
     env: docker
     plan: free
     autoDeploy: true
-    # Render will build the Dockerfile automatically.
-    # We’ll add secrets (env vars) in the UI.
+
+    # Tell Render exactly where the Dockerfile is (repo root)
+    rootDir: .
+    dockerfilePath: ./Dockerfile
+
     envVars:
       - key: TRELLO_KEY
         sync: false
@@ -15,4 +18,5 @@ services:
         sync: false
       - key: XERO_CLIENT_ID
         sync: false
+
 
