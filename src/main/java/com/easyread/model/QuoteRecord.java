@@ -4,8 +4,10 @@ public class QuoteRecord {
     public int quoteNumber;          // e.g. 5462
     public String clientName;
     public String clientEmail;
+    public String companyName;
     public String documentTitle;
     public String specialNotes;
+
 
     public int finalWordCount;
     public double estimatedHours;

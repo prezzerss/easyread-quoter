@@ -1,72 +1,157 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <modelVersion>4.0.0</modelVersion>
+  <groupId>com.easyread</groupId>
+  <artifactId>easyread-quoter</artifactId>
+  <version>1.0.0</version>
+  <name>Easy Read Quoter</name>
+  <description>Desktop + Web Quoter with Trello and (WIP) Xero</description>
 
-    <groupId>com.easyread</groupId>
-    <artifactId>easyread-quoter</artifactId>
-    <version>1.0.0</version>
-    <name>EasyReadQuoter</name>
-    <packaging>jar</packaging>
+  <properties>
+    <java.version>21</java.version>
+    <javafx.version>21.0.5</javafx.version>
+    <javafx.platform>mac-aarch64</javafx.platform> <!-- Intel Mac? use mac -->
 
-    <properties>
-        <!-- Use your installed Java version here. 17 is a good stable choice -->
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+  <!-- make the compiler target Java 21 (enables 'var' etc.) -->
+  <maven.compiler.release>21</maven.compiler.release>
+  <maven.compiler.source>21</maven.compiler.source>
+  <maven.compiler.target>21</maven.compiler.target>
+</properties>
 
-        <!-- JavaFX version -->
-        <javafx.version>21.0.2</javafx.version>
-    </properties>
+  <repositories>
+    <!-- JPro repository -->
+    <repository>
+      <id>jpro-repo</id>
+      <url>https://sandec.jfrog.io/artifactory/repo</url>
+    </repository>
+  </repositories>
+  
+  <pluginRepositories>
+  <pluginRepository>
+    <id>jpro-repo</id>
+    <url>https://sandec.jfrog.io/artifactory/repo</url>
+  </pluginRepository>
+</pluginRepositories>
 
-    <dependencies>
+  <dependencies>
+    <!-- JavaFX core -->
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>${javafx.version}</version>
+      <classifier>${javafx.platform}</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-graphics</artifactId>
+      <version>${javafx.version}</version>
+      <classifier>${javafx.platform}</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-web</artifactId>
+      <version>${javafx.version}</version>
+      <classifier>${javafx.platform}</classifier>
+    </dependency>
 
-        <!-- JavaFX modules we need (controls/layout/windows) -->
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-base</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
+    <!-- JSON, HTTP, etc -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.17.2</version>
+    </dependency>
 
-        <!-- Jackson (JSON read/write pretty-printed) -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.17.2</version>
-        </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>4.12.0</version>
+    </dependency>
 
-    </dependencies>
+    <dependency>
+      <groupId>com.squareup.okio</groupId>
+      <artifactId>okio</artifactId>
+      <version>3.9.0</version>
+    </dependency>
 
-    <build>
-        <plugins>
-            <!-- This plugin lets us run the JavaFX app using mvn exec:java -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.5.0</version>
-                <configuration>
-                    <mainClass>com.easyread.MainApp</mainClass>
-                    <commandlineArgs></commandlineArgs>
-                    <systemProperties>
-                        <systemProperty>
-                            <key>prism.order</key>
-                            <value>sw</value>
-                        </systemProperty>
-                    </systemProperties>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20240303</version>
+    </dependency>
+    
+    <!-- JSON (Gson) -->
+	<dependency>
+ 	  <groupId>com.google.code.gson</groupId>
+  	  <artifactId>gson</artifactId>
+  	  <version>2.11.0</version>
+	</dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <!-- existing dependency copy plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.6.1</version>
+        <executions>
+          <execution>
+            <id>copy-deps</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
+              <includeScope>runtime</includeScope>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- 🟩 JPro Maven plugin (for web mode) -->
+      <plugin>
+        <groupId>one.jpro</groupId>
+        <artifactId>jpro-maven-plugin</artifactId>
+        <version>2024.1.0</version>
+      </plugin>
+      
+      <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.13.0</version>
+      <configuration>
+        <release>21</release>
+      </configuration>
+    </plugin>
+    
+    <plugin>
+  <groupId>one.jpro</groupId>
+  <artifactId>jpro-maven-plugin</artifactId>
+  <version>2024.1.0</version>
+  <configuration>
+    <!-- CHANGE THIS ONLY if your main class is different -->
+    <mainClassName>com.easyread.MainApp</mainClassName>
+
+    <!-- Optional but helpful -->
+    <port>8080</port>
+    <jvmArgs>
+      <!-- JavaFX modules (safe to include) -->
+      <arg>--add-modules=javafx.controls,javafx.graphics,javafx.web</arg>
+      <!-- A couple of common JavaFX reflective opens (harmless if unused) -->
+      <arg>--add-opens=javafx.graphics/com.sun.javafx.css=ALL-UNNAMED</arg>
+      <arg>--add-opens=javafx.graphics/com.sun.javafx.stage=ALL-UNNAMED</arg>
+    </jvmArgs>
+  </configuration>
+</plugin>
+
+
+    </plugins>
+  </build>
 
 </project>
+

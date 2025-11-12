@@ -5,6 +5,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class TrelloClient {
 
@@ -84,15 +90,6 @@ public class TrelloClient {
         return URLEncoder.encode(s, StandardCharsets.UTF_8.toString());
     }
 
-    private static HttpURLConnection post(String urlStr, String body) throws IOException {
-        URL url = new URL(urlStr + "?" + body);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("POST");
-        conn.setDoOutput(false);
-        conn.setRequestProperty("Accept", "application/json");
-        return conn;
-    }
-
     private void putJson(String urlStr, String json) throws IOException {
         URL url = new URL(urlStr + "?key=" + urlencode(apiKey) + "&token=" + urlencode(token));
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -133,4 +130,221 @@ public class TrelloClient {
         if (end == -1) return null;
         return json.substring(start, end);
     }
+    
+    private Map<String, String> loadTemplates() {
+        Map<String, String> map = new HashMap<>();
+        try {
+            String json = Files.readString(Paths.get("templates.json"), StandardCharsets.UTF_8);
+            // super simple parser: assume flat object { "Company": "cardId", ... }
+            json = json.trim();
+            // remove { and }
+            if (json.startsWith("{")) json = json.substring(1);
+            if (json.endsWith("}")) json = json.substring(0, json.length() - 1);
+
+            // split on commas at top level
+            String[] entries = json.split(",");
+            for (String entry : entries) {
+                String[] parts = entry.split(":");
+                if (parts.length == 2) {
+                    String rawKey = parts[0].trim();
+                    String rawVal = parts[1].trim();
+
+                    // remove quotes "..."
+                    String key = rawKey.replaceAll("^\"|\"$", "");
+                    String val = rawVal.replaceAll("^\"|\"$", "");
+
+                    map.put(key, val);
+                }
+            }
+        } catch (Exception e) {
+            // If templates.json missing or malformed, that's fine; we just return empty map.
+            System.err.println("Warning: couldn't read templates.json, using no templates. " + e.getMessage());
+        }
+        return map;
+    }
+    
+    public String createFullCardForQuote(
+            String companyName,
+            String jobName,
+            int quoteNumber,
+            String briefText,
+            String clientEmail,
+            double estHours
+    ) throws IOException {
+
+        // 1. Build final Trello card title
+        // e.g. "5462 | Safeguarding Policy | Example Council"
+        String cardTitle = quoteNumber
+                + " | "
+                + jobName
+                + " | "
+                + companyName;
+
+        // 2. Load template mapping
+        Map<String, String> templates = loadTemplates();
+        String templateCardId = templates.get(companyName);
+
+        // 3. Create the card (either from template or fresh)
+        String cardId;
+        if (templateCardId != null && !templateCardId.isEmpty()) {
+            // clone from template
+            String urlStr = "https://api.trello.com/1/cards" +
+                    "?key=" + urlencode(apiKey) +
+                    "&token=" + urlencode(token) +
+                    "&idList=" + urlencode(listId) +
+                    "&name=" + urlencode(cardTitle) +
+                    "&idCardSource=" + urlencode(templateCardId) +
+                    "&keepFromSource=all";
+
+            System.out.println("DEBUG Trello POST URL:\n" + urlStr);
+
+            HttpURLConnection conn = post(urlStr, "");
+            int code = conn.getResponseCode();
+            if (code != 200) {
+                throw new IOException("Failed to create card from template. HTTP " + code + " " + readStream(conn.getErrorStream()));
+            }
+            String response = readStream(conn.getInputStream());
+            cardId = extractJsonField(response, "id");
+
+        } else {
+            // normal fresh card
+            String urlStr = "https://api.trello.com/1/cards" +
+                    "?key=" + urlencode(apiKey) +
+                    "&token=" + urlencode(token) +
+                    "&idList=" + urlencode(listId) +
+                    "&name=" + urlencode(cardTitle);
+
+            HttpURLConnection conn = post(urlStr, "");
+            int code = conn.getResponseCode();
+            if (code != 200) {
+                throw new IOException("Failed to create card. HTTP " + code + " " + readStream(conn.getErrorStream()));
+            }
+            String response = readStream(conn.getInputStream());
+            cardId = extractJsonField(response, "id");
+        }
+
+     // 4. Append info to the existing description instead of overwriting
+        String appendText =
+                "\n\n---\n\n" +
+                "Client email: " + clientEmail;
+
+        String descUrl = "https://api.trello.com/1/cards/" + cardId +
+                "/desc?key=" + urlencode(apiKey) +
+                "&token=" + urlencode(token) +
+                "&value=" + urlencode(appendText);
+
+        HttpURLConnection descConn = putNoBody(descUrl);
+        System.out.println("Appended extra info to template description.");
+
+
+        // 5. Set custom field "Status" = with us
+        setStatusWithUs(cardId);
+
+        // 6. Set custom field "Estimated hours"
+        setEstimatedHours(cardId, estHours);
+
+        return cardId;
+    }
+    
+    private static HttpURLConnection putNoBody(String urlStr) throws IOException {
+        URL url = new URL(urlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("PUT");
+        conn.setDoOutput(false);
+        conn.setRequestProperty("Accept", "application/json");
+        return conn;
+    }
+    
+    private static HttpURLConnection post(String urlStr, String body) throws IOException {
+        URL url = new URL(urlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+        // 👉 This is the critical line:
+        conn.setRequestMethod("POST");      // not GET!
+
+        conn.setDoOutput(true);
+        conn.setRequestProperty("Accept", "application/json");
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+
+        if (body != null && !body.isEmpty()) {
+            try (OutputStream os = conn.getOutputStream()) {
+                byte[] input = body.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+        }
+        return conn;
+    }
+    
+    public void uploadAttachmentToCard(String cardId, String filePath) throws IOException {
+        if (filePath == null || filePath.isBlank()) {
+            System.out.println("No file to attach (filePath empty). Skipping attachment.");
+            return;
+        }
+
+        File f = new File(filePath);
+        if (!f.exists() || !f.isFile()) {
+            System.out.println("File does not exist or is not a file: " + filePath);
+            return;
+        }
+
+        String urlStr = "https://api.trello.com/1/cards/" + cardId + "/attachments";
+
+        // We'll build a multipart/form-data POST manually
+        String boundary = "----EasyReadBoundary" + System.currentTimeMillis();
+
+        URL url = new URL(urlStr
+                + "?key=" + urlencode(apiKey)
+                + "&token=" + urlencode(token));
+
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setDoOutput(true);
+        conn.setRequestProperty("Accept", "application/json");
+        conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+        try (OutputStream os = conn.getOutputStream();
+             BufferedOutputStream bos = new BufferedOutputStream(os);
+             FileInputStream fis = new FileInputStream(f)) {
+
+            // Part 1: the "file" field
+            String fileHeader =
+                    "--" + boundary + "\r\n" +
+                    "Content-Disposition: form-data; name=\"file\"; filename=\"" + f.getName() + "\"\r\n" +
+                    "Content-Type: application/octet-stream\r\n\r\n";
+            bos.write(fileHeader.getBytes(StandardCharsets.UTF_8));
+
+            // File bytes
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = fis.read(buffer)) != -1) {
+                bos.write(buffer, 0, read);
+            }
+            bos.write("\r\n".getBytes(StandardCharsets.UTF_8));
+
+            // Part 2: optional "name" field (nice human-readable label)
+            String namePart =
+                    "--" + boundary + "\r\n" +
+                    "Content-Disposition: form-data; name=\"name\"\r\n\r\n" +
+                    f.getName() + "\r\n";
+            bos.write(namePart.getBytes(StandardCharsets.UTF_8));
+
+            // Finish multipart
+            String endMarker = "--" + boundary + "--\r\n";
+            bos.write(endMarker.getBytes(StandardCharsets.UTF_8));
+
+            bos.flush();
+        }
+
+        int code = conn.getResponseCode();
+        if (code < 200 || code >= 300) {
+            throw new IOException("Attachment upload failed. HTTP " + code + " " + readStream(conn.getErrorStream()));
+        } else {
+            System.out.println("Attachment uploaded successfully for card " + cardId);
+        }
+    }
+
+
+
+
+
 }
