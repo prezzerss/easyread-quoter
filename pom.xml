@@ -173,6 +173,37 @@
         <release>21</release>
       </configuration>
     </plugin>
+    
+     <!-- Write Main-Class into MANIFEST.MF -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-jar-plugin</artifactId>
+      <version>3.3.0</version>
+      <configuration>
+        <archive>
+          <manifest>
+            <!-- 👇 REPLACE if your package/class differs -->
+            <mainClass>com.easyread.MainApp</mainClass>
+          </manifest>
+        </archive>
+      </configuration>
+    </plugin>
+
+    <!-- Build a fat/uber jar that includes dependencies -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-shade-plugin</artifactId>
+      <version>3.5.1</version>
+      <executions>
+        <execution>
+          <phase>package</phase>
+          <goals><goal>shade</goal></goals>
+          <configuration>
+            <createDependencyReducedPom>false</createDependencyReducedPom>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
 
     <plugin>
       <groupId>org.apache.maven.plugins</groupId>
