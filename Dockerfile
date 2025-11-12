@@ -27,4 +27,3 @@ ENV JPRO_HOST=0.0.0.0
 ENV JPRO_PORT=8080
 
 CMD sh -c "java -Djpro.host=$JPRO_HOST -Djpro.port=$JPRO_PORT -jar /app/app.jar"
-
