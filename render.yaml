@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: easyread-quoter
+    env: docker
+    plan: free
+    autoDeploy: true
+    # Render will build the Dockerfile automatically.
+    # We’ll add secrets (env vars) in the UI.
+    envVars:
+      - key: TRELLO_KEY
+        sync: false
+      - key: TRELLO_TOKEN
+        sync: false
+      - key: TRELLO_LIST_ID
+        sync: false
+      - key: XERO_CLIENT_ID
+        sync: false
+
