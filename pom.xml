@@ -236,7 +236,7 @@
         <archive>
           <manifest>
             <!-- 👇 change if your package differs -->
-            <mainClass>com.easyread.MainApp</mainClass>
+            <mainClass>com.easyread.WebMain</mainClass>
           </manifest>
         </archive>
       </configuration>
