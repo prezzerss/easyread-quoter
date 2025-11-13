@@ -5,7 +5,7 @@ FROM maven:3.9.9-eclipse-temurin-21 AS builder
 WORKDIR /app
 
 COPY . .
-RUN mvn -B -U -DskipTests package
+RUN mvn -B -U -DskipTests package -Pweb
 
 # Pick the built jar (prefer shaded) and rename it to app.jar
 RUN set -e; \
@@ -24,10 +24,9 @@ WORKDIR /app
 
 COPY --from=builder /app/app.jar /app/app.jar
 
-EXPOSE 8080
 ENV JPRO_HOST=0.0.0.0
-ENV JPRO_PORT=8080
-
+ENV JPRO_PORT=$PORT
+EXPOSE 8080
 CMD sh -c "java -Djpro.host=$JPRO_HOST -Djpro.port=$JPRO_PORT -jar /app/app.jar"
 
 
