@@ -3,30 +3,33 @@
 # ---- BUILD ----
 FROM maven:3.9.9-eclipse-temurin-21 AS builder
 WORKDIR /app
-COPY . .
 
-# Build and copy runtime deps into target/lib
-RUN mvn -B -U -DskipTests package dependency:copy-dependencies \
-    -DincludeScope=runtime -DoutputDirectory=target/lib \
- && echo "=== TARGET CONTENTS ===" \
- && ls -al target target/lib || true \
- && echo "=== CLASSES PREVIEW ===" \
- && find target/classes -maxdepth 3 -type f -name '*.class' | head -n 40 || true
+COPY . .
+RUN mvn -B -U -DskipTests package
+
+# Pick the built jar (prefer shaded) and rename it to app.jar
+RUN set -e; \
+    echo "=== TARGET CONTENTS ==="; ls -al target; \
+    JAR="$(ls target/*-shaded.jar 2>/dev/null || ls target/*.jar | head -n1)"; \
+    echo "Selected JAR: $JAR"; \
+    cp "$JAR" /app/app.jar; \
+    echo "=== MANIFEST ==="; \
+    (jar xf /app/app.jar META-INF/MANIFEST.MF && grep -i '^Main-Class' META-INF/MANIFEST.MF || true); \
+    echo "=== VERIFY WebMain.class ==="; \
+    jar tf /app/app.jar | grep -E '^com/easyread/WebMain\.class$' || true
 
 # ---- RUNTIME ----
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-# Copy compiled classes + dependency jars
-COPY --from=builder /app/target/classes /app/classes
-COPY --from=builder /app/target/lib /app/lib
+COPY --from=builder /app/app.jar /app/app.jar
 
 EXPOSE 8080
 ENV JPRO_HOST=0.0.0.0
 ENV JPRO_PORT=8080
 
-# 👇 REPLACE com.easyread.WebMain with the fully-qualified class name you found in step A
-CMD sh -c 'java -Djpro.host=$JPRO_HOST -Djpro.port=$JPRO_PORT -cp "/app/classes:/app/lib/*" com.easyread.WebMain'
+CMD sh -c "java -Djpro.host=$JPRO_HOST -Djpro.port=$JPRO_PORT -jar /app/app.jar"
+
 
 
 
