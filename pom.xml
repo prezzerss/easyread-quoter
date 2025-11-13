@@ -20,6 +20,8 @@
   <maven.compiler.target>21</maven.compiler.target>
 </properties>
 
+
+
   <repositories>
     <!-- JPro repository -->
     <repository>
@@ -147,10 +149,25 @@
       </dependencies>
     </profile>
 
-    <!-- Render/Web build – no JavaFX deps -->
     <profile>
-      <id>web</id>
-    </profile>
+    <id>web</id>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.easyread.WebMain</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</profile>
   </profiles>
 
 
