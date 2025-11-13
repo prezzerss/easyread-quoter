@@ -4,9 +4,9 @@ services:
     env: docker
     plan: free
     autoDeploy: true
-    # Render will build the Dockerfile automatically.
-    # We’ll add secrets (env vars) in the UI.
     envVars:
+      - key: PORT
+        value: 8080   # Render will override this automatically
       - key: TRELLO_KEY
         sync: false
       - key: TRELLO_TOKEN
@@ -15,4 +15,3 @@ services:
         sync: false
       - key: XERO_CLIENT_ID
         sync: false
-
