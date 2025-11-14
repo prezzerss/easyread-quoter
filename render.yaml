@@ -1,12 +1,10 @@
 services:
-  - type: web
-    name: easyread-quoter
-    env: docker
+  env: docker  - type: web
     plan: free
     autoDeploy: true
     envVars:
       - key: PORT
-        value: 8080   # Render will override this automatically
+        value: 8080   # Render overrides this automatically
       - key: TRELLO_KEY
         sync: false
       - key: TRELLO_TOKEN
@@ -15,3 +13,4 @@ services:
         sync: false
       - key: XERO_CLIENT_ID
         sync: false
+    name: easyread-quoter
