@@ -1,5 +1,9 @@
 package com.easyread;
 
-public class WebMain {
+import com.jpro.webapi.JProApplication;
 
+public class WebMain {
+    public static void main(String[] args) {
+        JProApplication.launch(MainApp.class, args);
+    }
 }
