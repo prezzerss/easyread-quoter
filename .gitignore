@@ -49,3 +49,5 @@ target/
 .DS_Store
 .idea/
 *.iml
+META-INF/
+data/

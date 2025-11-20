@@ -1,252 +1,241 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns="http://m/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.easyread</groupId>
-  <artifactId>easyread-quoter</artifactId>
-  <version>1.0.0</version>
-  <name>Easy Read Quoter</name>
-  <description>Desktop + Web Quoter with Trello and (WIP) Xero</description>
+    <groupId>com.easyread</groupId>
+    <artifactId>easyread-quoter</artifactId>
+    <version>1.0.0</version>
+    <name>Easy Read Quoter</name>
+    <description>Desktop + Web Quoter with Trello and (WIP) Xero</description>
 
-  <properties>
-    <java.version>21</java.version>
-    <javafx.version>21.0.5</javafx.version>
-    <javafx.platform>mac-aarch64</javafx.platform> <!-- Intel Mac? use mac -->
+    <properties>
+        <java.version>21</java.version>
+        <javafx.version>21.0.5</javafx.version>
+        <javafx.platform>mac-aarch64</javafx.platform>
+        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <jpro.version>2024.4.0</jpro.version>
+    </properties>
 
-  <!-- make the compiler target Java 21 (enables 'var' etc.) -->
-  <maven.compiler.release>21</maven.compiler.release>
-  <maven.compiler.source>21</maven.compiler.source>
-  <maven.compiler.target>21</maven.compiler.target>
-</properties>
+    <repositories>
+        <!-- JPro repository -->
+        <repository>
+            <id>jpro-repo</id>
+            <url>https://sandec.jfrog.io/artifactory/repo</url>
+            <releases>
+                <updatePolicy>always</updatePolicy>
+            </releases>
+        </repository>
+    </repositories>
 
-  <repositories>
-    <!-- JPro repository -->
-    <repository>
-      <id>jpro-repo</id>
-      <url>https://sandec.jfrog.io/artifactory/repo</url>
-      <releases>
-      <updatePolicy>always</updatePolicy>
-    </releases>
-    </repository>
-  </repositories>
-  
-  <pluginRepositories>
-  <pluginRepository>
-    <id>jpro-repo</id>
-    <url>https://sandec.jfrog.io/artifactory/repo</url>
-  </pluginRepository>
-</pluginRepositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jpro-repo</id>
+            <url>https://sandec.jfrog.io/artifactory/repo</url>
+        </pluginRepository>
+    </pluginRepositories>
 
-  <dependencies>
-    <!-- JavaFX core -->
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-controls</artifactId>
-      <version>${javafx.version}</version>
-      <classifier>${javafx.platform}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-graphics</artifactId>
-      <version>${javafx.version}</version>
-      <classifier>${javafx.platform}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-web</artifactId>
-      <version>${javafx.version}</version>
-      <classifier>${javafx.platform}</classifier>
-    </dependency>
+    <dependencies>
 
-    <!-- JSON, HTTP, etc -->
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.17.2</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>okhttp</artifactId>
-      <version>4.12.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.squareup.okio</groupId>
-      <artifactId>okio</artifactId>
-      <version>3.9.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>20240303</version>
-    </dependency>
-    
-    <!-- JSON (Gson) -->
-	<dependency>
- 	  <groupId>com.google.code.gson</groupId>
-  	  <artifactId>gson</artifactId>
-  	  <version>2.11.0</version>
-	</dependency>
-	
-	 <!-- <dependency>
-      <groupId>one.jpro</groupId>
-      <artifactId>jpro-webapi</artifactId>
-      <version>2024.1.0</version>
-    </dependency> -->
-
-  </dependencies>
-  
-   <profiles>
-    <!-- Local desktop run on your Mac -->
-    <profile>
-      <id>desktop</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <dependencies>
+   		<dependency>
+   			<groupId>com.sandec.jpro</groupId>
+  		  	<artifactId>jpro-webapi</artifactId>
+   			<version>${jpro.version}</version>
+   			<scope>compile</scope>
+		</dependency>
+		
         <dependency>
-          <groupId>org.openjfx</groupId>
-          <artifactId>javafx-controls</artifactId>
-          <version>${javafx.version}</version>
-          <classifier>${javafx.platform}</classifier>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
         </dependency>
         <dependency>
-          <groupId>org.openjfx</groupId>
-          <artifactId>javafx-graphics</artifactId>
-          <version>${javafx.version}</version>
-          <classifier>${javafx.platform}</classifier>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
         </dependency>
         <dependency>
-          <groupId>org.openjfx</groupId>
-          <artifactId>javafx-web</artifactId>
-          <version>${javafx.version}</version>
-          <classifier>${javafx.platform}</classifier>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
         </dependency>
-      </dependencies>
-    </profile>
 
-    <!-- Render/Web build – no JavaFX deps -->
-    <profile>
-      <id>web</id>
-    </profile>
-  </profiles>
+        <!-- JSON, HTTP, etc -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.17.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.12.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okio</groupId>
+            <artifactId>okio</artifactId>
+            <version>3.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20240303</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+        </dependency>
 
+        <!-- Linux JavaFX for Render -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>21.0.5</version>
+            <classifier>linux</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>21.0.5</version>
+            <classifier>linux</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>21.0.5</version>
+            <classifier>linux</classifier>
+        </dependency>
 
-  <build>
-    <plugins>
+    </dependencies>
 
-      <!-- existing dependency copy plugin -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.6.1</version>
-        <executions>
-          <execution>
-            <id>copy-deps</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/lib</outputDirectory>
-              <includeScope>runtime</includeScope>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+    <profiles>
+        <!-- Desktop profile -->
+        <profile>
+            <id>desktop</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>3.3.0</version>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>com.easyread.MainApp</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
 
-      <!-- 🟩 JPro Maven plugin (for web mode) -->
-      <plugin>
-        <groupId>one.jpro</groupId>
-        <artifactId>jpro-maven-plugin</artifactId>
-        <version>2024.1.0</version>
-      </plugin>
-      
-      <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-compiler-plugin</artifactId>
-      <version>3.11.0</version>
-      <configuration>
-        <release>21</release>
-      </configuration>
-    </plugin>
+        <!-- Web profile -->
+        <profile>
+            <id>web</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>3.3.0</version>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>com.easyread.WebMain</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>one.jpro</groupId>
+                        <artifactId>jpro-maven-plugin</artifactId>
+                        <version>2024.1.0</version>
+                        <configuration>
+                            <mainClassName>com.easyread.WebMain</mainClassName>
+                            <port>8080</port>
+                            <jvmArgs>
+                                <arg>--add-modules=javafx.controls,javafx.graphics,javafx.web</arg>
+                                <arg>--add-opens=javafx.graphics/com.sun.javafx.css=ALL-UNNAMED</arg>
+                                <arg>--add-opens=javafx.graphics/com.sun.javafx.stage=ALL-UNNAMED</arg>
+                            </jvmArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-surefire-plugin</artifactId>
-      <version>3.2.5</version>
-    </plugin>
+    <build>
+        <plugins>
+            <!-- Copy dependencies -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-deps</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <includeScope>runtime</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-failsafe-plugin</artifactId>
-      <version>3.2.5</version>
-    </plugin>
-      
-      <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-compiler-plugin</artifactId>
-      <version>3.13.0</version>
-      <configuration>
-        <release>21</release>
-      </configuration>
-    </plugin>
-    
-    <plugin>
-  <groupId>one.jpro</groupId>
-  <artifactId>jpro-maven-plugin</artifactId>
-  <version>2024.1.0</version>
-  <configuration>
-    <!-- CHANGE THIS ONLY if your main class is different -->
-    <mainClassName>com.easyread.MainApp</mainClassName>
+            <!-- Compiler -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <release>21</release>
+                </configuration>
+            </plugin>
 
-    <!-- Optional but helpful -->
-    <port>8080</port>
-    <jvmArgs>
-      <!-- JavaFX modules (safe to include) -->
-      <arg>--add-modules=javafx.controls,javafx.graphics,javafx.web</arg>
-      <!-- A couple of common JavaFX reflective opens (harmless if unused) -->
-      <arg>--add-opens=javafx.graphics/com.sun.javafx.css=ALL-UNNAMED</arg>
-      <arg>--add-opens=javafx.graphics/com.sun.javafx.stage=ALL-UNNAMED</arg>
-    </jvmArgs>
-  </configuration>
-</plugin>
+            <!-- Shade plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
-
-<!-- JPro plugin creates the runnable web jar -->
-      <plugin>
-        <groupId>one.jpro</groupId>
-        <artifactId>jpro-maven-plugin</artifactId>
-        <version>2024.1.0</version>
-        <configuration>
-          <mainClassName>com.easyread.WebMain</mainClassName>
-        </configuration>
-      </plugin>
-
-      <!-- Put runtime deps into target/lib (handy for desktop too) -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.6.1</version>
-        <executions>
-          <execution>
-            <id>copy-deps</id>
-            <phase>package</phase>
-            <goals><goal>copy-dependencies</goal></goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/lib</outputDirectory>
-              <includeScope>runtime</includeScope>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-
-    </plugins>
-  </build>
-
+            <!-- Test plugins -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+        </plugins>
+    </build>
 </project>
-
