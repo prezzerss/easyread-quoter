@@ -51,3 +51,4 @@ target/
 *.iml
 META-INF/
 data/
+replacements.txt
