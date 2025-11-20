@@ -7,11 +7,14 @@ RUN mvn -q -U -DskipTests package
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=builder /app/target/*-shaded.jar /app/app.jar
+
+COPY --from=builder /app/app.jar /app/app.jar
+
 EXPOSE 8080
 ENV JPRO_HOST=0.0.0.0
 ENV JPRO_PORT=8080
-CMD 
-["java","-Djpro.host=${JPRO_HOST}","-Djpro.port=${JPRO_PORT}","-jar","app.jar"]
+
+CMD ["java","-Djpro.host=${JPRO_HOST}","-Djpro.port=${JPRO_PORT}","-jar","app.jar"]
+
 
 
