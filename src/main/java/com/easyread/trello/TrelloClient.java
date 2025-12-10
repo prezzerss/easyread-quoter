@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.nio.file.Path;
+
 
 
 public class TrelloClient {
@@ -133,35 +135,56 @@ public class TrelloClient {
     
     private Map<String, String> loadTemplates() {
         Map<String, String> map = new HashMap<>();
+        String json = null;
+
+        // 1) Try external file first: data/templates.json
+        Path external = Paths.get("data", "templates.json");
         try {
-            String json = Files.readString(Paths.get("templates.json"), StandardCharsets.UTF_8);
-            // super simple parser: assume flat object { "Company": "cardId", ... }
+            if (Files.exists(external)) {
+                System.out.println("Loading templates from " + external.toAbsolutePath());
+                json = Files.readString(external, StandardCharsets.UTF_8);
+            } else {
+                // 2) Fallback: try to load default from classpath /data/templates.json
+                System.out.println("data/templates.json not found on disk, trying classpath resource /data/templates.json");
+                try (InputStream in = getClass().getResourceAsStream("/data/templates.json")) {
+                    if (in != null) {
+                        json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                    } else {
+                        System.err.println("No templates.json found on disk or in resources; using no templates.");
+                        return map;
+                    }
+                }
+            }
+
+            // Now parse the JSON string
             json = json.trim();
-            // remove { and }
             if (json.startsWith("{")) json = json.substring(1);
             if (json.endsWith("}")) json = json.substring(0, json.length() - 1);
 
-            // split on commas at top level
-            String[] entries = json.split(",");
-            for (String entry : entries) {
-                String[] parts = entry.split(":");
-                if (parts.length == 2) {
-                    String rawKey = parts[0].trim();
-                    String rawVal = parts[1].trim();
+            if (!json.isBlank()) {
+                String[] entries = json.split(",");
+                for (String entry : entries) {
+                    String[] parts = entry.split(":");
+                    if (parts.length == 2) {
+                        String rawKey = parts[0].trim();
+                        String rawVal = parts[1].trim();
 
-                    // remove quotes "..."
-                    String key = rawKey.replaceAll("^\"|\"$", "");
-                    String val = rawVal.replaceAll("^\"|\"$", "");
+                        String key = rawKey.replaceAll("^\"|\"$", "");
+                        String val = rawVal.replaceAll("^\"|\"$", "");
 
-                    map.put(key, val);
+                        map.put(key, val);
+                    }
                 }
             }
+
+            System.out.println("Loaded " + map.size() + " templates from templates.json");
         } catch (Exception e) {
-            // If templates.json missing or malformed, that's fine; we just return empty map.
             System.err.println("Warning: couldn't read templates.json, using no templates. " + e.getMessage());
         }
+
         return map;
     }
+
     
     public String createFullCardForQuote(
             String companyName,

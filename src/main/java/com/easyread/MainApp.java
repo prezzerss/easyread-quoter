@@ -113,6 +113,7 @@ public class MainApp extends Application {
         trelloPreviewArea.setPrefRowCount(10);
 
         Button createTrelloButton = new Button("Create Trello Card");
+  
 
         trelloLayout.getChildren().addAll(
                 trelloLabel,
@@ -201,6 +202,7 @@ public class MainApp extends Application {
      deleteCompanyField.setPromptText("Exact company name");
 
      Button deleteCompanyButton = new Button("Delete");
+     deleteCompanyButton.getStyleClass().add("destructive");
 
 
      // Export button (quick access)
@@ -622,6 +624,7 @@ public class MainApp extends Application {
         });
         
         Button createXeroQuoteBtn = new Button("Create in Xero");
+    
         xeroLayout.getChildren().add(createXeroQuoteBtn);
 
         createXeroQuoteBtn.setOnAction(ev -> {
@@ -636,7 +639,7 @@ public class MainApp extends Application {
             	    alert("Xero", "XERO_CLIENT_ID env var is not set.");
             	    return;
             	}
-            	var xero = new com.easyread.xero.XeroClient(System.getenv("XERO_CLIENT_ID"));
+            	var xero = new com.easyread.xero.XeroClient("059309B562E941509530413753FA3715");
 
 
 
@@ -742,6 +745,16 @@ public class MainApp extends Application {
         //
         // -------- CREATE TRELLO CARD BUTTON ACTION --------
         //
+        
+        final String STATUS_FIELD_ID = "68680660756e5ba27c9f8d46";      
+        final String STATUS_OPTION_WITH_US_ID = "68680660756e5ba27c9f8d47"; 
+        final String EST_HOURS_FIELD_ID = "6888df8d59a5fa3d6f2b1072"; 
+
+        final String TRELLO_KEY = "9a03517de4f4abef7e5c51cd06487ae3";
+        final String TRELLO_TOKEN = "ATTAa42ced1f5f30e3139ca63b8fa768bafd1581e699b38e873824d721d0c4c825ae759A7D9F";
+        final String TRELLO_LIST_ID = "6867b3f24ff9b2f54aa8b931";
+        
+        /*
         final String TRELLO_KEY   = System.getenv("TRELLO_KEY");
         final String TRELLO_TOKEN = System.getenv("TRELLO_TOKEN");
         final String TRELLO_LIST_ID = System.getenv("TRELLO_LIST_ID");
@@ -755,7 +768,7 @@ public class MainApp extends Application {
 
         final String STATUS_FIELD_ID   = System.getenv("STATUS_FIELD_ID");
         final String STATUS_OPTION_WITH_US_ID = System.getenv("STATUS_OPTION_WITH_US_ID");
-        final String EST_HOURS_FIELD_ID = System.getenv("EST_HOURS_FIELD_ID"); // Estimated hours
+        final String EST_HOURS_FIELD_ID = System.getenv("EST_HOURS_FIELD_ID"); */
 
         TrelloClient trelloClient = new TrelloClient(
                 TRELLO_KEY,
@@ -867,10 +880,19 @@ public class MainApp extends Application {
 
         TabPane tabPane = new TabPane(quoteTab, trelloTab, xeroTab, emailTab, clientsTab);
 
+        // Create the scene
         Scene scene = new Scene(tabPane, 650, 800);
+
+        // Attach scene to the main window (stage) and show it
         primaryStage.setTitle("Easy Read Quoter");
         primaryStage.setScene(scene);
+
+        // Optional but nice: make sure it appears sensibly on-screen
+        primaryStage.centerOnScreen();
+
         primaryStage.show();
+
+        
     }
     
  // Simple row model for the jobs table
