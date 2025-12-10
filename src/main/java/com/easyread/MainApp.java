@@ -920,7 +920,6 @@ public class MainApp extends Application {
         alert(title, content);
     }
 
-    //check why this isnt being used
     private void alertError(String title, String content) {
         Alert a = new Alert(Alert.AlertType.ERROR);
         a.setTitle(title);
