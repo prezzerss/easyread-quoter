@@ -5,14 +5,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.nio.file.Path;
-
-
+import org.json.JSONObject;
 
 public class TrelloClient {
 
@@ -245,20 +243,29 @@ public class TrelloClient {
             String response = readStream(conn.getInputStream());
             cardId = extractJsonField(response, "id");
         }
+        
+     // 4. Preserve *template* description (preferences etc.) and append our brief + email.
+//      IMPORTANT: Trello's /desc endpoint SETS the description, it does not append.
+//      So we first fetch the current desc, then write back: existing + appended block.
+  String existingDesc = getCardDescription(cardId);
 
-     // 4. Append info to the existing description instead of overwriting
-        String appendText =
-                "\n\n---\n\n" +
-                "Client email: " + clientEmail;
+  StringBuilder block = new StringBuilder();
+  block.append("\n\n---\n\n");
+  block.append("Brief\n\n");
+  if (briefText != null && !briefText.isBlank()) {
+      block.append(briefText.trim());
+  } else {
+      block.append("(no brief provided)");
+  }
 
-        String descUrl = "https://api.trello.com/1/cards/" + cardId +
-                "/desc?key=" + urlencode(apiKey) +
-                "&token=" + urlencode(token) +
-                "&value=" + urlencode(appendText);
+  // Manager request: add client email into the brief block (append again)
+  if (clientEmail != null && !clientEmail.isBlank()) {
+      block.append("\n\nClient email: ").append(clientEmail.trim());
+  }
 
-        HttpURLConnection descConn = putNoBody(descUrl);
-        System.out.println("Appended extra info to template description.");
-
+  String newDesc = upsertBriefSection(existingDesc, briefText, clientEmail);
+  updateCardDescription(cardId, newDesc);
+  System.out.println("Updated card description (kept template prefs + appended brief/email).");
 
         // 5. Set custom field "Status" = with us
         setStatusWithUs(cardId);
@@ -365,9 +372,178 @@ public class TrelloClient {
             System.out.println("Attachment uploaded successfully for card " + cardId);
         }
     }
+    
+    
+    private String getCardDescription(String cardId) throws IOException {
+        String urlStr = "https://api.trello.com/1/cards/" + cardId +
+                "?fields=desc" +
+                "&key=" + urlencode(apiKey) +
+                "&token=" + urlencode(token);
 
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Accept", "application/json");
 
+        int code = conn.getResponseCode();
+        if (code < 200 || code >= 300) {
+            throw new IOException("GET desc failed. HTTP " + code + " " + readStream(conn.getErrorStream()));
+        }
 
+        String response = readStream(conn.getInputStream());
+        return new JSONObject(response).optString("desc", "");
+    }
+
+    private void updateCardDescription(String cardId, String newDesc) throws IOException {
+        String urlStr = "https://api.trello.com/1/cards/" + cardId +
+                "?key=" + urlencode(apiKey) +
+                "&token=" + urlencode(token) +
+                "&desc=" + urlencode(newDesc == null ? "" : newDesc);
+
+        HttpURLConnection conn = putNoBody(urlStr);
+        int code = conn.getResponseCode();
+        if (code < 200 || code >= 300) {
+            throw new IOException("PUT desc failed. HTTP " + code + " " + readStream(conn.getErrorStream()));
+        }
+    }
+    
+    private String injectIntoBriefSection(String existingDesc, String briefText, String clientEmail) {
+        String desc = (existingDesc == null) ? "" : existingDesc;
+
+        String briefBody = (briefText != null && !briefText.isBlank())
+                ? briefText.trim()
+                : "(no brief provided)";
+
+        if (clientEmail != null && !clientEmail.isBlank()) {
+            briefBody += "\n\nClient email: " + clientEmail.trim();
+        }
+
+        // If template has a "Brief" heading, place content there.
+        // We’ll insert AFTER the first "Brief" line, and BEFORE "Company Preferences" if it exists.
+        int briefIdx = indexOfLine(desc, "Brief");
+        if (briefIdx >= 0) {
+            int insertPos = endOfLine(desc, briefIdx);
+
+            // If there is "Company Preferences" later, insert before it (keeps template order)
+            int prefsIdx = indexOfLineAfter(desc, "Company Preferences", insertPos);
+
+            String before = desc.substring(0, insertPos);
+            String after;
+
+            if (prefsIdx >= 0) {
+                // Keep any blank lines between Brief and Company Preferences, but replace them with our content + spacing
+                after = desc.substring(prefsIdx);
+                return before + "\n\n" + briefBody + "\n\n" + after;
+            } else {
+                // No prefs section found; just insert after Brief heading
+                after = desc.substring(insertPos);
+                return before + "\n\n" + briefBody + after;
+            }
+        }
+
+        // Fallback: no "Brief" placeholder in template → append at end
+        return desc + "\n\n---\n\nBrief\n\n" + briefBody;
+    }
+
+    private int indexOfLine(String text, String lineExact) {
+        String needle1 = "\n" + lineExact + "\n";
+        String needle2 = "\n" + lineExact + "\r\n";
+        if (text.startsWith(lineExact + "\n") || text.startsWith(lineExact + "\r\n")) return 0;
+
+        int i = text.indexOf(needle1);
+        if (i >= 0) return i + 1; // points at line start (after \n)
+        i = text.indexOf(needle2);
+        if (i >= 0) return i + 1;
+        return -1;
+    }
+
+    private int indexOfLineAfter(String text, String lineExact, int afterPos) {
+        int i = text.indexOf("\n" + lineExact + "\n", afterPos);
+        if (i >= 0) return i + 1;
+        i = text.indexOf("\n" + lineExact + "\r\n", afterPos);
+        if (i >= 0) return i + 1;
+        if (text.startsWith(lineExact + "\n", afterPos) || text.startsWith(lineExact + "\r\n", afterPos)) return afterPos;
+        return -1;
+    }
+
+    private int endOfLine(String text, int lineStartIdx) {
+        int n = text.indexOf('\n', lineStartIdx);
+        return (n >= 0) ? n : text.length();
+    }
+    
+    private String upsertBriefSection(String existingDesc, String briefText, String clientEmail) {
+        String desc = (existingDesc == null) ? "" : existingDesc;
+
+        String briefBody = (briefText != null && !briefText.isBlank())
+                ? briefText.trim()
+                : "(no brief provided)";
+
+        if (clientEmail != null && !clientEmail.isBlank()) {
+            briefBody += "\n\nClient email: " + clientEmail.trim();
+        }
+
+        // Work line-by-line so we can respect Markdown headings
+        String[] lines = desc.split("\\r?\\n", -1);
+
+        int briefLine = -1;
+        for (int i = 0; i < lines.length; i++) {
+            if (isBriefHeading(lines[i])) {
+                briefLine = i;
+                break;
+            }
+        }
+
+        // If no Brief heading exists at all, append a new properly formatted one
+        if (briefLine == -1) {
+            return desc + (desc.endsWith("\n") || desc.isEmpty() ? "" : "\n")
+                    + "## Brief\n\n" + briefBody + "\n";
+        }
+
+        // Find next heading after Brief (e.g. "Company Preferences", any "# Something", etc.)
+        int nextHeading = lines.length;
+        for (int i = briefLine + 1; i < lines.length; i++) {
+            if (isAnyHeading(lines[i])) {
+                nextHeading = i;
+                break;
+            }
+        }
+
+        // Rebuild: keep everything up to and including Brief heading line,
+        // then insert our body, then keep the rest from nextHeading onwards.
+        StringBuilder out = new StringBuilder();
+
+        // part 1: up to Brief heading line (inclusive)
+        for (int i = 0; i <= briefLine; i++) {
+            out.append(lines[i]).append("\n");
+        }
+
+        // part 2: our brief content
+        out.append("\n").append(briefBody).append("\n\n");
+
+        // part 3: rest of template from next heading onward
+        for (int i = nextHeading; i < lines.length; i++) {
+            out.append(lines[i]);
+            if (i < lines.length - 1) out.append("\n");
+        }
+
+        return out.toString();
+    }
+
+    private boolean isBriefHeading(String line) {
+        if (line == null) return false;
+        String s = line.trim();
+        // Matches: "Brief", "# Brief", "## Brief", etc.
+        return s.equalsIgnoreCase("Brief") || s.matches("^#{1,6}\\s*Brief\\s*$");
+    }
+
+    private boolean isAnyHeading(String line) {
+        if (line == null) return false;
+        String s = line.trim();
+        // Any markdown heading like "# Something"
+        if (s.matches("^#{1,6}\\s+.+$")) return true;
+
+        // Also treat these known section titles as headings even if not markdown
+        return s.equalsIgnoreCase("Company Preferences") || s.equalsIgnoreCase("Brief");
+    }
 
 
 }
